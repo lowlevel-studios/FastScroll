@@ -218,7 +218,9 @@ public class FastScroller extends LinearLayout {
                 @Override
                 public void run() {
                     // set initial positions for bubble and handle
-                    setViewPositions(getScrollProportion(mRecyclerView));
+                    if (mRecyclerView != null) {
+                        setViewPositions(getScrollProportion(mRecyclerView));
+                    }
                 }
             });
         }
