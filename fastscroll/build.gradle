@@ -15,13 +15,6 @@
  */
 
 apply plugin: 'com.android.library'
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'maven-publish'
-
-def libraryName = 'FastScroll'
-def libraryArtifact = 'fastscroll'
-def libraryGroup = 'com.l4digital.fastscroll'
-def libraryVersion = '1.1.1'
 
 android {
     compileSdkVersion rootProject.ext.sdkVersion
@@ -29,9 +22,6 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion rootProject.ext.sdkVersion
-
-        versionCode 1
-        versionName libraryVersion
 
         consumerProguardFiles 'proguard-rules.pro'
     }
@@ -48,81 +38,4 @@ task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
 }
 
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-task generateArchives(dependsOn: ['sourcesJar', 'javadocJar'])
-
-publishing {
-    publications {
-        aar(MavenPublication) {
-            groupId = libraryGroup
-            version = libraryVersion
-            artifactId = libraryArtifact
-
-            artifact("$buildDir/outputs/aar/$artifactId-release.aar")
-
-            pom.withXml {
-                def dependencies = asNode().appendNode('dependencies')
-
-                configurations.getByName("api").allDependencies.each {
-                    def dependency = dependencies.appendNode('dependency')
-
-                    dependency.appendNode('groupId', it.group)
-                    dependency.appendNode('artifactId', it.name)
-                    dependency.appendNode('version', it.version)
-
-                    if (it.excludeRules.size() > 0) {
-                        def exclusions = dependency.appendNode('exclusions')
-
-                        it.excludeRules.each { ExcludeRule rule ->
-                            def exclusion = exclusions.appendNode('exclusion')
-
-                            exclusion.appendNode('groupId', rule.group)
-
-                            if (rule.module != null) {
-                                exclusion.appendNode('artifactId', rule.module)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        java(MavenPublication) {
-            groupId = libraryGroup
-            version = libraryVersion
-            artifactId = libraryArtifact
-
-            artifact sourcesJar
-            artifact javadocJar
-        }
-    }
-}
-
-bintray {
-    user = project.findProperty("bintray_user") ?: ""
-    key = project.findProperty("bintray_apikey") ?: ""
-
-    publications = ['aar', 'java']
-
-    pkg {
-        name = libraryName
-        repo = 'maven'
-        userOrg = 'l4digital'
-        licenses = ['Apache-2.0']
-
-        version {
-            name = libraryVersion
-            vcsTag = libraryVersion
-            released = new Date()
-        }
-    }
-}
+task generateArchives(dependsOn: ['sourcesJar'])
